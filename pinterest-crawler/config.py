@@ -123,8 +123,11 @@ R2_ACCESS_KEY_ID = os.getenv('R2_ACCESS_KEY_ID')
 R2_SECRET_ACCESS_KEY = os.getenv('R2_SECRET_ACCESS_KEY')
 R2_BUCKET_NAME = os.getenv('R2_BUCKET_NAME')
 R2_PUBLIC_URL = os.getenv('R2_PUBLIC_URL')
+# Local storage
+LOCAL_DOWNLOAD_DIR = '/home/thanh/wallpaper'
+
 OUTPUT_FOLDER = 'wallpaper/xianxia'
 
 # Output
 TOP_RESULTS_COUNT = 100
-OUTPUT_FILE = 'top_wallpapers.json'
+OUTPUT_FILE = '/home/thanh/wallpaper/top_wallpapers.json'

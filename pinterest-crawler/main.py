@@ -23,7 +23,7 @@ from pathlib import Path
 
 from config import (
     SEARCH_KEYWORDS, TOP_RESULTS_COUNT, OUTPUT_FILE, OUTPUT_FOLDER,
-    R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET_NAME
+    R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET_NAME, LOCAL_DOWNLOAD_DIR
 )
 from scorer import ImageScorer, ImageFilter, score_images
 from deduplicator import deduplicate_images
@@ -145,6 +145,65 @@ async def run_pipeline(
         print(f'     {img.get("width", 0)}x{img.get("height", 0)} - {img.get("description", "")[:50]}...')
 
     return top_images
+
+
+async def download_to_local(images: list):
+    """Download images to local wallpaper folder"""
+    import aiohttp
+    import hashlib
+    from config import PINTEREST_HEADERS
+
+    base_dir = Path(LOCAL_DOWNLOAD_DIR)
+    base_dir.mkdir(parents=True, exist_ok=True)
+
+    print(f'\nDownloading to {LOCAL_DOWNLOAD_DIR}...')
+
+    downloaded = 0
+    async with aiohttp.ClientSession(headers=PINTEREST_HEADERS) as session:
+        for img in images:
+            try:
+                url = img.get('url', '')
+                if not url:
+                    continue
+
+                # Create character folder
+                char = img.get('detected_character') or img.get('ai_detected_character') or 'general'
+                char_dir = base_dir / char
+                char_dir.mkdir(exist_ok=True)
+
+                # Generate filename from URL hash
+                img_id = img.get('id') or hashlib.md5(url.encode()).hexdigest()[:12]
+                ext = url.split('.')[-1].split('?')[0][:4]
+                if ext not in ['jpg', 'jpeg', 'png', 'webp']:
+                    ext = 'jpg'
+                filepath = char_dir / f'{img_id}.{ext}'
+
+                if filepath.exists():
+                    print(f'  Skip (exists): {filepath.name}')
+                    continue
+
+                # Download
+                async with session.get(url) as response:
+                    if response.status != 200:
+                        continue
+                    data = await response.read()
+
+                # Save
+                filepath.write_bytes(data)
+                downloaded += 1
+                print(f'  [{downloaded}] {filepath.name} ({len(data)//1024}KB)')
+
+            except Exception as e:
+                print(f'  Error: {e}')
+
+    # Save metadata JSON
+    metadata_file = base_dir / 'metadata.json'
+    with open(metadata_file, 'w', encoding='utf-8') as f:
+        json.dump(images, f, ensure_ascii=False, indent=2)
+
+    print(f'\nDownloaded {downloaded} images to {LOCAL_DOWNLOAD_DIR}')
+    print(f'Metadata saved to {metadata_file}')
+    return downloaded
 
 
 async def upload_to_r2(images: list):
@@ -360,6 +419,7 @@ def main():
     parser.add_argument('--source', choices=['wallhaven', 'pinterest'], default='wallhaven', help='Image source')
     parser.add_argument('--preview', action='store_true', help='Generate preview HTML')
     parser.add_argument('--upload', action='store_true', help='Upload to R2 after processing')
+    parser.add_argument('--download', action='store_true', help='Download to local wallpaper folder')
 
     args = parser.parse_args()
 
@@ -376,6 +436,10 @@ def main():
     if args.preview and images:
         generate_preview_html(images)
         print('Open preview.html in browser to view results')
+
+    # Optional: Download to local
+    if args.download and images:
+        asyncio.run(download_to_local(images))
 
     # Optional: Upload to R2
     if args.upload and images:
