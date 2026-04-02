@@ -1,0 +1,34 @@
+# Dependencies
+node_modules/
+pinterest-crawler/venv/
+pinterest-crawler/.venv/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Environment (sensitive)
+.env
+.env.local
+
+# Generated output files
+scraped-data.json
+upload-results.json
+r2-images.json
+downloads/
+pinterest-crawler/*.json
+!pinterest-crawler/requirements.txt
+preview-generated.html
+pinterest-crawler/preview.html
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db

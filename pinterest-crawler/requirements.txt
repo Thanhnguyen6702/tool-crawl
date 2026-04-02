@@ -1,0 +1,36 @@
+# Pinterest Crawler Requirements
+
+# Core
+requests>=2.31.0
+aiohttp>=3.9.0
+beautifulsoup4>=4.12.0
+lxml>=5.0.0
+
+# Browser automation
+playwright>=1.40.0
+selenium>=4.15.0
+
+# Image processing
+Pillow>=10.0.0
+imagehash>=4.3.1
+opencv-python>=4.8.0
+
+# AI/ML
+torch>=2.0.0
+transformers>=4.35.0
+open-clip-torch>=2.24.0
+sentence-transformers>=2.2.0
+
+# Utilities
+python-dotenv>=1.0.0
+tqdm>=4.66.0
+tenacity>=8.2.0
+
+# API
+fastapi>=0.104.0
+uvicorn>=0.24.0
+pydantic>=2.5.0
+
+# Storage
+boto3>=1.33.0
+redis>=5.0.0
