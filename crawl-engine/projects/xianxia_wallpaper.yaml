@@ -1,0 +1,110 @@
+name: xianxia-wallpaper
+
+sources:
+  - type: wallhaven
+    keywords:
+      # Direct xianxia/donghua
+      - xianxia
+      - donghua
+      - chinese anime
+      - cultivation
+      # Popular series
+      - soul land
+      - douluo dalu
+      - battle through the heavens
+      - doupo cangqiong
+      - perfect world anime
+      - martial universe
+      - swallowed star
+      - stellar transformations
+      - against the gods
+      - immortal
+      # Art style
+      - chinese fantasy
+      - wuxia
+      - martial arts anime
+    max_per_keyword: 50
+    config:
+      delay: 2
+      categories: "010"    # anime only
+      purity: "100"        # sfw
+      sorting: favorites
+      min_resolution: "720x720"
+
+  - type: pinterest
+    keywords:
+      # English
+      - xianxia wallpaper 4k
+      - cultivation anime wallpaper
+      - chinese fantasy art
+      - donghua wallpaper hd
+      - immortal cultivation art
+      # Chinese
+      - 仙侠壁纸
+      - 修仙动漫
+      - 玄幻壁纸
+      # Character specific
+      - Wang Lin xianxia
+      - Xiao Yan battle through the heavens
+      - Ye Fan shrouding heavens
+      - Shi Hao perfect world
+      # Series
+      - 仙逆壁纸
+      - 斗破苍穹壁纸
+      - 遮天壁纸
+      - 完美世界壁纸
+    max_per_keyword: 50
+    config:
+      delay_min: 2
+      delay_max: 5
+      min_width: 720
+      min_height: 720
+
+processors:
+  - type: image_filter
+    min_width: 720
+    min_height: 720
+    min_aspect_ratio: 0.3
+    max_aspect_ratio: 3.0
+    filter_watermarks: true
+
+  - type: scorer
+    weights:
+      quality: 1.0
+      popularity: 0.5
+      keyword: 2.0
+    keyword_patterns:
+      - pattern: "xianxia|xiuxian|修仙|仙侠"
+        score: 10.0
+      - pattern: "cultivation|cultivator|immortal"
+        score: 8.0
+      - pattern: "donghua|动漫|动画"
+        score: 5.0
+      - pattern: "王林|Wang Lin|仙逆|Renegade Immortal"
+        score: 15.0
+      - pattern: "萧炎|Xiao Yan|斗破苍穹|Battle Through"
+        score: 15.0
+      - pattern: "叶凡|Ye Fan|遮天|Shrouding"
+        score: 15.0
+      - pattern: "石昊|Shi Hao|完美世界|Perfect World"
+        score: 15.0
+      - pattern: "wuxia|武侠|martial arts"
+        score: 5.0
+      - pattern: "4k|2160|3840"
+        score: 3.0
+
+dedup:
+  threshold: 0.90
+  methods:
+    - url
+    - source_id
+    - phash
+    - dhash
+
+storage:
+  - type: local
+    path: /home/thanh/wallpaper/xianxia
+
+output:
+  limit: 200
+  format: json

@@ -32,3 +32,7 @@ pinterest-crawler/preview.html
 # OS
 .DS_Store
 Thumbs.db
+
+# Crawl engine
+crawl-engine/venv/
+crawl-engine/data/
