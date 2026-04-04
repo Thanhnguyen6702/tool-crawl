@@ -28,6 +28,11 @@ app = FastAPI(title="Crawl Engine", version="1.0")
 # Serve static files
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
+# Serve local wallpaper images
+WALLPAPER_DIR = Path("/home/thanh/wallpaper")
+if WALLPAPER_DIR.exists():
+    app.mount("/wallpaper/images", StaticFiles(directory=str(WALLPAPER_DIR)), name="wallpaper")
+
 
 # ── Helpers ──────────────────────────────────────────────────
 
