@@ -377,6 +377,7 @@ header {
       <button class="btn btn-secondary" onclick="switchTab('preview')" id="tab-preview">Preview</button>
       <button class="btn btn-secondary" onclick="switchTab('crawl')" id="tab-crawl">+ Crawl</button>
       <button class="btn btn-secondary" onclick="switchTab('history')" id="tab-history">History</button>
+      <button class="btn btn-secondary" onclick="validateImages()" id="btn-validate" title="Check & remove broken images">🔍 Validate</button>
     </div>
   </div>
   <div class="stats-bar" id="stats-bar"></div>
@@ -669,6 +670,42 @@ async function loadHistory() {
     }).join('');
   } catch (e) {
     console.error('History error:', e);
+  }
+}
+
+// ── Validate ───────────────────────────
+async function validateImages() {
+  const btn = document.getElementById('btn-validate');
+  btn.disabled = true;
+  btn.textContent = '⏳ Checking...';
+
+  try {
+    const res = await fetch(`/api/validate/${PROJECT}`, { method: 'POST' });
+    const data = await res.json();
+    if (res.status === 409) {
+      alert('Validation already running!');
+      btn.disabled = false;
+      btn.textContent = '🔍 Validate';
+      return;
+    }
+
+    // Poll until done
+    const poll = setInterval(async () => {
+      const sr = await fetch('/api/validate/status');
+      const sd = await sr.json();
+      if (!sd.running.length) {
+        clearInterval(poll);
+        btn.disabled = false;
+        btn.textContent = '🔍 Validate';
+        alert('Validation complete! Broken images removed.');
+        loadStats();
+        loadItems();
+      }
+    }, 3000);
+  } catch (e) {
+    alert('Error: ' + e.message);
+    btn.disabled = false;
+    btn.textContent = '🔍 Validate';
   }
 }
 

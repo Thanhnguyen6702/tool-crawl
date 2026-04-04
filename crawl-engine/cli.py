@@ -102,6 +102,19 @@ async def cmd_history(args):
             )
 
 
+async def cmd_validate(args):
+    from core.db import CrawlDB
+    from core.validator import validate_images
+
+    async with CrawlDB() as db:
+        result = await validate_images(db, args.project)
+        print(f"\n🔍 Validation Result:")
+        print(f"  Checked:  {result['total_checked']}")
+        print(f"  Valid:    {result['valid']}")
+        print(f"  Broken:   {result['broken']}")
+        print(f"  Deleted:  {result['deleted']}")
+
+
 def cmd_list(args):
     print("\n📂 Available Projects:")
     for f in sorted(PROJECTS_DIR.glob("*.yaml")):
@@ -131,6 +144,10 @@ def main():
     p_hist.add_argument("project", help="Project name")
     p_hist.add_argument("--limit", type=int, default=20)
 
+    # validate
+    p_val = sub.add_parser("validate", help="Check & remove broken images")
+    p_val.add_argument("project", help="Project name")
+
     # list
     sub.add_parser("list", help="List available projects")
 
@@ -143,6 +160,8 @@ def main():
         asyncio.run(cmd_status(args))
     elif args.command == "history":
         asyncio.run(cmd_history(args))
+    elif args.command == "validate":
+        asyncio.run(cmd_validate(args))
     elif args.command == "list":
         cmd_list(args)
     else:

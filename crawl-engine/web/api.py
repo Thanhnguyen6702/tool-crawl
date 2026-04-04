@@ -251,6 +251,42 @@ async def crawl_status():
     return {"running": list(_running_crawls.keys())}
 
 
+# ── Validate (check & remove broken images) ─────────────────
+
+_running_validates: dict[str, bool] = {}
+
+
+async def _run_validate(project: str):
+    import sys
+    sys.path.insert(0, str(ENGINE_DIR))
+    from core.db import CrawlDB
+    from core.validator import validate_images
+
+    _running_validates[project] = True
+    try:
+        async with CrawlDB(DB_PATH) as db:
+            result = await validate_images(db, project)
+            log.info(f"Validate result: {result}")
+    except Exception as e:
+        log.error(f"Validate failed: {e}")
+    finally:
+        _running_validates.pop(project, None)
+
+
+@app.post("/api/validate/{project}")
+async def trigger_validate(project: str, bg: BackgroundTasks):
+    """Validate all images: check URLs, remove broken ones."""
+    if project in _running_validates:
+        raise HTTPException(409, f"Validation already running for {project}")
+    bg.add_task(_run_validate, project)
+    return {"status": "started", "project": project}
+
+
+@app.get("/api/validate/status")
+async def validate_status():
+    return {"running": list(_running_validates.keys())}
+
+
 # ── Run Server ───────────────────────────────────────────────
 
 if __name__ == "__main__":
