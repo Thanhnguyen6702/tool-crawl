@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Crawl Engine</title>
+<style>
+:root {
+  --bg: #0a0a0f;
+  --card: #14141f;
+  --border: #1e1e30;
+  --text: #e0e0e0;
+  --muted: #666;
+  --accent: #6c5ce7;
+  --accent2: #00cec9;
+  --danger: #e74c3c;
+  --success: #00b894;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Header ─────────────────────────── */
+header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(10,10,15,0.95);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 16px;
+}
+
+.header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.header-top h1 {
+  font-size: 18px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.header-top h1 span { color: var(--accent); }
+
+.stats-bar {
+  display: flex;
+  gap: 16px;
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 8px;
+}
+
+.stats-bar .stat-val { color: var(--accent2); font-weight: 600; }
+
+/* ── Tabs ───────────────────────────── */
+.tabs {
+  display: flex;
+  gap: 0;
+  margin-top: 10px;
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.tabs::-webkit-scrollbar { display: none; }
+
+.tab {
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--muted);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+.tab:hover { color: var(--text); }
+.tab.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+/* ── Controls ───────────────────────── */
+.controls {
+  display: flex;
+  gap: 8px;
+  padding: 12px 16px;
+  flex-wrap: wrap;
+}
+
+.controls input {
+  flex: 1;
+  min-width: 150px;
+  padding: 8px 12px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 14px;
+  outline: none;
+}
+.controls input:focus { border-color: var(--accent); }
+
+.btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:hover { background: #5a4bd5; }
+.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-secondary { background: var(--card); color: var(--text); border: 1px solid var(--border); }
+.btn-secondary:hover { border-color: var(--accent); }
+
+/* ── Category Pills ─────────────────── */
+.categories {
+  display: flex;
+  gap: 8px;
+  padding: 0 16px 12px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.categories::-webkit-scrollbar { display: none; }
+
+.pill {
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  background: var(--card);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  transition: all 0.2s;
+}
+.pill:hover { border-color: var(--accent); color: var(--text); }
+.pill.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+/* ── Grid ───────────────────────────── */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 8px;
+  padding: 0 12px 80px;
+}
+
+@media (min-width: 768px) {
+  .grid { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; padding: 0 16px 80px; }
+}
+
+.card {
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--card);
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+.card:hover { transform: scale(1.02); }
+
+.card img {
+  width: 100%;
+  aspect-ratio: 3/4;
+  object-fit: cover;
+  display: block;
+  background: #111;
+}
+
+.card-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 30px 8px 8px;
+  background: linear-gradient(transparent, rgba(0,0,0,0.85));
+  font-size: 11px;
+}
+
+.card-overlay .res {
+  color: #fff;
+  font-weight: 600;
+}
+
+.card-overlay .score {
+  float: right;
+  background: var(--accent);
+  color: #fff;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.card-overlay .source {
+  display: block;
+  color: var(--muted);
+  margin-top: 2px;
+  font-size: 10px;
+}
+
+/* ── Lightbox ───────────────────────── */
+.lightbox {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(0,0,0,0.97);
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+}
+.lightbox.active { display: flex; }
+
+.lightbox img {
+  max-width: 95vw;
+  max-height: 80vh;
+  object-fit: contain;
+  border-radius: 8px;
+}
+
+.lightbox-info {
+  margin-top: 12px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--muted);
+}
+.lightbox-info a { color: var(--accent2); text-decoration: none; }
+
+.lightbox-close {
+  position: absolute;
+  top: 16px;
+  right: 20px;
+  font-size: 32px;
+  color: #fff;
+  cursor: pointer;
+  z-index: 201;
+}
+
+/* ── Crawl Panel ────────────────────── */
+.crawl-panel {
+  display: none;
+  padding: 16px;
+}
+.crawl-panel.active { display: block; }
+
+.form-group {
+  margin-bottom: 16px;
+}
+.form-group label {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 6px;
+  color: var(--muted);
+}
+.form-group input, .form-group select {
+  width: 100%;
+  padding: 10px 12px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 14px;
+  outline: none;
+}
+
+.crawl-log {
+  background: #000;
+  border-radius: 8px;
+  padding: 12px;
+  font-family: 'Menlo', monospace;
+  font-size: 12px;
+  color: var(--accent2);
+  max-height: 200px;
+  overflow-y: auto;
+  margin-top: 12px;
+  display: none;
+}
+
+/* ── History Panel ──────────────────── */
+.history-panel { display: none; padding: 16px; }
+.history-panel.active { display: block; }
+
+.history-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.history-table th {
+  text-align: left;
+  padding: 8px;
+  border-bottom: 1px solid var(--border);
+  color: var(--muted);
+  font-weight: 500;
+}
+.history-table td {
+  padding: 8px;
+  border-bottom: 1px solid var(--border);
+}
+.history-table .badge {
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+}
+.badge-done { background: rgba(0,184,148,0.2); color: var(--success); }
+.badge-error { background: rgba(231,76,60,0.2); color: var(--danger); }
+
+/* ── Loading ────────────────────────── */
+.loading {
+  text-align: center;
+  padding: 40px;
+  color: var(--muted);
+}
+.loading .spinner {
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Empty ──────────────────────────── */
+.empty {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--muted);
+}
+.empty .icon { font-size: 48px; margin-bottom: 12px; }
+
+/* ── Mobile phone preview frame ─────── */
+.phone-toggle {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 50;
+}
+
+/* ── Pagination ─────────────────────── */
+.pagination {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  padding: 20px 16px;
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-top">
+    <h1>🕷️ <span>Crawl</span> Engine</h1>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-secondary" onclick="switchTab('preview')" id="tab-preview">Preview</button>
+      <button class="btn btn-secondary" onclick="switchTab('crawl')" id="tab-crawl">+ Crawl</button>
+      <button class="btn btn-secondary" onclick="switchTab('history')" id="tab-history">History</button>
+    </div>
+  </div>
+  <div class="stats-bar" id="stats-bar"></div>
+</header>
+
+<!-- Preview Tab -->
+<div id="panel-preview">
+  <div class="controls">
+    <input type="text" id="search" placeholder="Search images..." oninput="debounceSearch()">
+    <select id="sort-select" onchange="loadItems()" style="padding:8px 12px;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;">
+      <option value="score">Score ↓</option>
+      <option value="created_at">Newest</option>
+      <option value="width">Resolution</option>
+    </select>
+  </div>
+  <div class="categories" id="categories"></div>
+  <div class="grid" id="grid"></div>
+  <div class="pagination" id="pagination"></div>
+</div>
+
+<!-- Crawl Tab -->
+<div class="crawl-panel" id="panel-crawl">
+  <h2 style="margin-bottom:16px;font-size:16px;">🚀 Start New Crawl</h2>
+  <div class="form-group">
+    <label>Project</label>
+    <select id="crawl-project"></select>
+  </div>
+  <div class="form-group">
+    <label>Max per keyword</label>
+    <input type="number" id="crawl-mpk" value="50" min="1" max="500">
+  </div>
+  <div class="form-group">
+    <label>
+      <input type="checkbox" id="crawl-skip-dl"> Skip download (crawl metadata only)
+    </label>
+  </div>
+  <button class="btn btn-primary" id="crawl-btn" onclick="startCrawl()">🕷️ Start Crawl</button>
+  <div class="crawl-log" id="crawl-log"></div>
+</div>
+
+<!-- History Tab -->
+<div class="history-panel" id="panel-history">
+  <h2 style="margin-bottom:16px;font-size:16px;">📜 Crawl History</h2>
+  <table class="history-table" id="history-table">
+    <thead>
+      <tr><th>ID</th><th>Source</th><th>Found</th><th>New</th><th>Dup</th><th>Status</th><th>Date</th></tr>
+    </thead>
+    <tbody id="history-body"></tbody>
+  </table>
+</div>
+
+<!-- Lightbox -->
+<div class="lightbox" id="lightbox" onclick="closeLightbox(event)">
+  <span class="lightbox-close" onclick="closeLightbox()">&times;</span>
+  <img id="lb-img" src="">
+  <div class="lightbox-info" id="lb-info"></div>
+</div>
+
+<script>
+// ── State ──────────────────────────────
+const PROJECT = 'xianxia-wallpaper';
+let currentPage = 1;
+let currentSource = '';
+let searchTimer = null;
+
+// ── Tab Switching ──────────────────────
+function switchTab(tab) {
+  ['preview', 'crawl', 'history'].forEach(t => {
+    document.getElementById(`panel-${t}`).classList.toggle('active', t === tab);
+    // For preview, it's not a panel class
+    if (t === 'preview') {
+      document.getElementById('panel-preview').style.display = tab === 'preview' ? '' : 'none';
+    }
+    document.getElementById(`tab-${t}`).classList.toggle('btn-primary', t === tab);
+    document.getElementById(`tab-${t}`).classList.toggle('btn-secondary', t !== tab);
+  });
+
+  if (tab === 'history') loadHistory();
+  if (tab === 'crawl') loadProjects();
+}
+
+// ── Load Stats ─────────────────────────
+async function loadStats() {
+  try {
+    const res = await fetch(`/api/stats/${PROJECT}`);
+    const data = await res.json();
+    document.getElementById('stats-bar').innerHTML = `
+      <span>Total: <span class="stat-val">${data.total}</span></span>
+      ${Object.entries(data.by_source).map(([s, c]) =>
+        `<span>${s}: <span class="stat-val">${c}</span></span>`
+      ).join('')}
+      ${Object.entries(data.by_status).map(([s, c]) =>
+        `<span>${s}: <span class="stat-val">${c}</span></span>`
+      ).join('')}
+    `;
+  } catch (e) {
+    console.error('Stats error:', e);
+  }
+}
+
+// ── Load Sources (Categories) ──────────
+async function loadSources() {
+  try {
+    const res = await fetch(`/api/sources/${PROJECT}`);
+    const data = await res.json();
+    const el = document.getElementById('categories');
+    el.innerHTML = `<span class="pill active" onclick="filterSource('')">All</span>`;
+    data.sources.forEach(s => {
+      el.innerHTML += `<span class="pill" onclick="filterSource('${s}')">${s}</span>`;
+    });
+  } catch (e) {
+    console.error('Sources error:', e);
+  }
+}
+
+function filterSource(source) {
+  currentSource = source;
+  currentPage = 1;
+  document.querySelectorAll('.pill').forEach(p => p.classList.remove('active'));
+  event.target.classList.add('active');
+  loadItems();
+}
+
+// ── Load Items ─────────────────────────
+async function loadItems() {
+  const grid = document.getElementById('grid');
+  const search = document.getElementById('search').value;
+  const sort = document.getElementById('sort-select').value;
+
+  grid.innerHTML = '<div class="loading"><div class="spinner"></div><p>Loading...</p></div>';
+
+  try {
+    const params = new URLSearchParams({
+      page: currentPage,
+      per_page: 40,
+      sort: sort,
+      order: 'desc',
+    });
+    if (currentSource) params.set('source', currentSource);
+    if (search) params.set('search', search);
+
+    const res = await fetch(`/api/items/${PROJECT}?${params}`);
+    const data = await res.json();
+
+    if (!data.items.length) {
+      grid.innerHTML = '<div class="empty"><div class="icon">📭</div><p>No images found</p></div>';
+      document.getElementById('pagination').innerHTML = '';
+      return;
+    }
+
+    grid.innerHTML = data.items.map(item => {
+      const meta = item.metadata || {};
+      return `
+        <div class="card" onclick="openLightbox('${item.url}', ${JSON.stringify(item).replace(/'/g, "\\'").replace(/"/g, '&quot;')})">
+          <img src="${item.url}" loading="lazy" alt="" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22200%22 height=%22200%22><rect fill=%22%23222%22 width=%22200%22 height=%22200%22/><text x=%2250%25%22 y=%2250%25%22 fill=%22%23555%22 text-anchor=%22middle%22 dy=%22.3em%22>Error</text></svg>'">
+          <div class="card-overlay">
+            <span class="score">${item.score || 0}</span>
+            <span class="res">${item.width}×${item.height}</span>
+            <span class="source">${item.source}</span>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    // Pagination
+    renderPagination(data.page, data.total_pages);
+  } catch (e) {
+    grid.innerHTML = `<div class="empty"><div class="icon">❌</div><p>Error loading: ${e.message}</p></div>`;
+  }
+}
+
+function renderPagination(page, totalPages) {
+  if (totalPages <= 1) {
+    document.getElementById('pagination').innerHTML = '';
+    return;
+  }
+
+  let html = '';
+  if (page > 1) html += `<button class="btn btn-secondary" onclick="goPage(${page-1})">← Prev</button>`;
+  html += `<span style="padding:8px;color:var(--muted);">${page} / ${totalPages}</span>`;
+  if (page < totalPages) html += `<button class="btn btn-secondary" onclick="goPage(${page+1})">Next →</button>`;
+  document.getElementById('pagination').innerHTML = html;
+}
+
+function goPage(p) {
+  currentPage = p;
+  loadItems();
+  window.scrollTo(0, 0);
+}
+
+function debounceSearch() {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(() => { currentPage = 1; loadItems(); }, 300);
+}
+
+// ── Lightbox ───────────────────────────
+function openLightbox(url, item) {
+  if (typeof item === 'string') item = JSON.parse(item);
+  document.getElementById('lb-img').src = url;
+  const meta = item.metadata || {};
+  const desc = meta.description || meta.title || '';
+  const whUrl = meta.wallhaven_url || '';
+  document.getElementById('lb-info').innerHTML = `
+    <strong>${item.width}×${item.height}</strong> · Score: ${item.score || 0} · ${item.source}
+    ${desc ? `<br>${desc.substring(0, 100)}` : ''}
+    ${whUrl ? `<br><a href="${whUrl}" target="_blank">View on Wallhaven ↗</a>` : ''}
+  `;
+  document.getElementById('lightbox').classList.add('active');
+}
+
+function closeLightbox(e) {
+  if (e && e.target.tagName === 'IMG') return;
+  document.getElementById('lightbox').classList.remove('active');
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeLightbox();
+});
+
+// ── Crawl ──────────────────────────────
+async function loadProjects() {
+  const res = await fetch('/api/projects');
+  const data = await res.json();
+  const sel = document.getElementById('crawl-project');
+  sel.innerHTML = data.projects.map(p => `<option value="${p.name}">${p.name}</option>`).join('');
+}
+
+async function startCrawl() {
+  const btn = document.getElementById('crawl-btn');
+  const log = document.getElementById('crawl-log');
+  btn.disabled = true;
+  btn.textContent = '⏳ Crawling...';
+  log.style.display = 'block';
+  log.textContent = 'Starting crawl...\n';
+
+  try {
+    const res = await fetch('/api/crawl', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        project: document.getElementById('crawl-project').value,
+        max_per_keyword: parseInt(document.getElementById('crawl-mpk').value),
+        skip_download: document.getElementById('crawl-skip-dl').checked,
+      }),
+    });
+    const data = await res.json();
+    log.textContent += `Job started: ${data.project}\n`;
+
+    // Poll status
+    const poll = setInterval(async () => {
+      const sr = await fetch('/api/crawl/status');
+      const sd = await sr.json();
+      if (!sd.running.length) {
+        clearInterval(poll);
+        log.textContent += 'Crawl completed! ✅\n';
+        btn.disabled = false;
+        btn.textContent = '🕷️ Start Crawl';
+        loadStats();
+        loadItems();
+      } else {
+        log.textContent += `Running: ${sd.running.join(', ')}...\n`;
+      }
+      log.scrollTop = log.scrollHeight;
+    }, 5000);
+  } catch (e) {
+    log.textContent += `Error: ${e.message}\n`;
+    btn.disabled = false;
+    btn.textContent = '🕷️ Start Crawl';
+  }
+}
+
+// ── History ────────────────────────────
+async function loadHistory() {
+  try {
+    const res = await fetch(`/api/history/${PROJECT}`);
+    const data = await res.json();
+    const tbody = document.getElementById('history-body');
+    tbody.innerHTML = data.runs.map(r => {
+      const date = new Date(r.started_at * 1000).toLocaleString();
+      const badge = r.status === 'done' ? 'badge-done' : 'badge-error';
+      return `<tr>
+        <td>${r.id}</td>
+        <td>${r.source}</td>
+        <td>${r.items_found}</td>
+        <td style="color:var(--success)">${r.items_new}</td>
+        <td style="color:var(--muted)">${r.items_dup}</td>
+        <td><span class="badge ${badge}">${r.status}</span></td>
+        <td style="font-size:12px;color:var(--muted)">${date}</td>
+      </tr>`;
+    }).join('');
+  } catch (e) {
+    console.error('History error:', e);
+  }
+}
+
+// ── Init ───────────────────────────────
+switchTab('preview');
+loadStats();
+loadSources();
+loadItems();
+</script>
+
+</body>
+</html>

@@ -5,6 +5,8 @@ Pillow>=10.0
 PyYAML>=6.0
 tqdm>=4.65
 python-dotenv>=1.0
+fastapi>=0.100
+uvicorn>=0.23
 # Optional: for R2 storage
 # boto3>=1.28
 # Optional: for AI classification
