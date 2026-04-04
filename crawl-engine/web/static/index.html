@@ -486,7 +486,9 @@ async function loadSources() {
     const el = document.getElementById('categories');
     el.innerHTML = `<span class="pill active" onclick="filterSource('')">All</span>`;
     data.sources.forEach(s => {
-      el.innerHTML += `<span class="pill" onclick="filterSource('${s}')">${s}</span>`;
+      // Pretty name: local-donghua → Donghua, wallhaven → Wallhaven
+      const label = s.replace('local-', '').replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+      el.innerHTML += `<span class="pill" onclick="filterSource('${s}')">${label}</span>`;
     });
   } catch (e) {
     console.error('Sources error:', e);
@@ -530,13 +532,25 @@ async function loadItems() {
 
     grid.innerHTML = data.items.map(item => {
       const meta = item.metadata || {};
+      const isVideo = (meta.media_type === 'video') || /\.(mp4|webm|mov)/.test(item.url);
+      const category = (item.source || '').replace('local-', '').replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+      const itemData = encodeURIComponent(JSON.stringify(item));
+      
+      let mediaHtml;
+      if (isVideo) {
+        mediaHtml = `<video src="${item.url}" preload="metadata" muted style="width:100%;aspect-ratio:3/4;object-fit:cover;display:block;background:#111;"></video>
+          <div style="position:absolute;top:8px;left:8px;background:rgba(0,0,0,0.7);color:#fff;padding:2px 6px;border-radius:4px;font-size:10px;">▶ Video</div>`;
+      } else {
+        mediaHtml = `<img src="${item.url}" loading="lazy" alt="" onerror="this.parentElement.style.display='none'">`;
+      }
+      
       return `
-        <div class="card" onclick="openLightbox('${item.url}', ${JSON.stringify(item).replace(/'/g, "\\'").replace(/"/g, '&quot;')})">
-          <img src="${item.url}" loading="lazy" alt="" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22200%22 height=%22200%22><rect fill=%22%23222%22 width=%22200%22 height=%22200%22/><text x=%2250%25%22 y=%2250%25%22 fill=%22%23555%22 text-anchor=%22middle%22 dy=%22.3em%22>Error</text></svg>'">
+        <div class="card" onclick="openLightbox('${item.url}', '${itemData}')">
+          ${mediaHtml}
           <div class="card-overlay">
             <span class="score">${item.score || 0}</span>
-            <span class="res">${item.width}×${item.height}</span>
-            <span class="source">${item.source}</span>
+            <span class="res">${item.width ? item.width+'×'+item.height : ''}</span>
+            <span class="source">${category}</span>
           </div>
         </div>
       `;
@@ -575,7 +589,7 @@ function debounceSearch() {
 
 // ── Lightbox ───────────────────────────
 function openLightbox(url, item) {
-  if (typeof item === 'string') item = JSON.parse(item);
+  if (typeof item === 'string') item = JSON.parse(decodeURIComponent(item));
   document.getElementById('lb-img').src = url;
   const meta = item.metadata || {};
   const desc = meta.description || meta.title || '';
