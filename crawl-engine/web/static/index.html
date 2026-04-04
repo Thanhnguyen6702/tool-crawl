@@ -432,7 +432,7 @@ header {
 <!-- Lightbox -->
 <div class="lightbox" id="lightbox" onclick="closeLightbox(event)">
   <span class="lightbox-close" onclick="closeLightbox()">&times;</span>
-  <img id="lb-img" src="">
+  <div id="lb-media"></div>
   <div class="lightbox-info" id="lb-info"></div>
 </div>
 
@@ -593,12 +593,21 @@ function debounceSearch() {
 // ── Lightbox ───────────────────────────
 function openLightbox(url, item) {
   if (typeof item === 'string') item = JSON.parse(decodeURIComponent(item));
-  document.getElementById('lb-img').src = url;
   const meta = item.metadata || {};
+  const isVideo = (meta.media_type === 'video') || /\.(mp4|webm|mov)/.test(url);
+  const mediaEl = document.getElementById('lb-media');
+  
+  if (isVideo) {
+    mediaEl.innerHTML = `<video src="${url}" controls autoplay style="max-width:95vw;max-height:80vh;border-radius:8px;"></video>`;
+  } else {
+    mediaEl.innerHTML = `<img src="${url}" style="max-width:95vw;max-height:80vh;object-fit:contain;border-radius:8px;">`;
+  }
+
   const desc = meta.description || meta.title || '';
   const whUrl = meta.wallhaven_url || '';
+  const category = (item.source || '').replace('local-', '').replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
   document.getElementById('lb-info').innerHTML = `
-    <strong>${item.width}×${item.height}</strong> · Score: ${item.score || 0} · ${item.source}
+    <strong>${item.width ? item.width+'×'+item.height : ''}</strong> · Score: ${item.score || 0} · ${category}
     ${desc ? `<br>${desc.substring(0, 100)}` : ''}
     ${whUrl ? `<br><a href="${whUrl}" target="_blank">View on Wallhaven ↗</a>` : ''}
   `;
@@ -606,7 +615,10 @@ function openLightbox(url, item) {
 }
 
 function closeLightbox(e) {
-  if (e && e.target.tagName === 'IMG') return;
+  if (e && (e.target.tagName === 'IMG' || e.target.tagName === 'VIDEO')) return;
+  // Stop video when closing
+  const vid = document.querySelector('#lb-media video');
+  if (vid) vid.pause();
   document.getElementById('lightbox').classList.remove('active');
 }
 
