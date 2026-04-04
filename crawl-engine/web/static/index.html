@@ -439,6 +439,9 @@ header {
 <script>
 // ── State ──────────────────────────────
 const PROJECT = 'xianxia-wallpaper';
+// Auto-detect base path (works behind /crawl/ proxy or standalone)
+const BASE = window.location.pathname.replace(/\/$/, '').replace(/\/static.*/, '') || '';
+const API = `${BASE}/api`;
 let currentPage = 1;
 let currentSource = '';
 let searchTimer = null;
@@ -462,7 +465,7 @@ function switchTab(tab) {
 // ── Load Stats ─────────────────────────
 async function loadStats() {
   try {
-    const res = await fetch(`/api/stats/${PROJECT}`);
+    const res = await fetch(`${API}/stats/${PROJECT}`);
     const data = await res.json();
     document.getElementById('stats-bar').innerHTML = `
       <span>Total: <span class="stat-val">${data.total}</span></span>
@@ -481,7 +484,7 @@ async function loadStats() {
 // ── Load Sources (Categories) ──────────
 async function loadSources() {
   try {
-    const res = await fetch(`/api/sources/${PROJECT}`);
+    const res = await fetch(`${API}/sources/${PROJECT}`);
     const data = await res.json();
     const el = document.getElementById('categories');
     el.innerHTML = `<span class="pill active" onclick="filterSource('')">All</span>`;
@@ -521,7 +524,7 @@ async function loadItems() {
     if (currentSource) params.set('source', currentSource);
     if (search) params.set('search', search);
 
-    const res = await fetch(`/api/items/${PROJECT}?${params}`);
+    const res = await fetch(`${API}/items/${PROJECT}?${params}`);
     const data = await res.json();
 
     if (!data.items.length) {
@@ -613,7 +616,7 @@ document.addEventListener('keydown', e => {
 
 // ── Crawl ──────────────────────────────
 async function loadProjects() {
-  const res = await fetch('/api/projects');
+  const res = await fetch(`${API}/projects`);
   const data = await res.json();
   const sel = document.getElementById('crawl-project');
   sel.innerHTML = data.projects.map(p => `<option value="${p.name}">${p.name}</option>`).join('');
@@ -628,7 +631,7 @@ async function startCrawl() {
   log.textContent = 'Starting crawl...\n';
 
   try {
-    const res = await fetch('/api/crawl', {
+    const res = await fetch(`${API}/crawl`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -642,7 +645,7 @@ async function startCrawl() {
 
     // Poll status
     const poll = setInterval(async () => {
-      const sr = await fetch('/api/crawl/status');
+      const sr = await fetch(`${API}/crawl/status`);
       const sd = await sr.json();
       if (!sd.running.length) {
         clearInterval(poll);
@@ -666,7 +669,7 @@ async function startCrawl() {
 // ── History ────────────────────────────
 async function loadHistory() {
   try {
-    const res = await fetch(`/api/history/${PROJECT}`);
+    const res = await fetch(`${API}/history/${PROJECT}`);
     const data = await res.json();
     const tbody = document.getElementById('history-body');
     tbody.innerHTML = data.runs.map(r => {
@@ -694,7 +697,7 @@ async function validateImages() {
   btn.textContent = '⏳ Checking...';
 
   try {
-    const res = await fetch(`/api/validate/${PROJECT}`, { method: 'POST' });
+    const res = await fetch(`${API}/validate/${PROJECT}`, { method: 'POST' });
     const data = await res.json();
     if (res.status === 409) {
       alert('Validation already running!');
@@ -705,7 +708,7 @@ async function validateImages() {
 
     // Poll until done
     const poll = setInterval(async () => {
-      const sr = await fetch('/api/validate/status');
+      const sr = await fetch(`${API}/validate/status`);
       const sd = await sr.json();
       if (!sd.running.length) {
         clearInterval(poll);
